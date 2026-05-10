@@ -7,5 +7,6 @@ requires-python = ">=3.11"
 dependencies = [
     "flwr[simulation]>=1.29.0",
     "numpy>=2.4.4",
+    "tabulate>=0.10.0",
     "tensorflow>=2.21.0",
 ]
