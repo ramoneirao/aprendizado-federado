@@ -36,8 +36,8 @@ class FlowerClient(fl.client.NumPyClient):
 
 # 3. Função fábrica que o simulador chamará para criar cada cliente
 def client_fn(cid: str) -> fl.client.Client:
-    # Em um cenário real, você particionaria o dataset baseado no ID do cliente (cid)
-    # Aqui estamos gerando dados sintéticos apenas para validar a arquitetura
+    np.random.seed(int(cid)) 
+    
     x_train, y_train = np.random.randn(100, 10), np.random.randint(0, 2, 100)
     x_test, y_test = np.random.randn(20, 10), np.random.randint(0, 2, 20)
 
