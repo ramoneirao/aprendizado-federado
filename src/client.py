@@ -5,7 +5,8 @@ import numpy as np
 # 1. Definir uma arquitetura de modelo simples
 # def get_model():
 #     model = tf.keras.models.Sequential([
-#         tf.keras.layers.Dense(16, activation="relu", input_shape=(10,)),
+#         tf.keras.Input(shape=(10,)),
+#         tf.keras.layers.Dense(16, activation="relu"),
 #         tf.keras.layers.Dense(1, activation="sigmoid"),
 #     ])
 #     model.compile(optimizer="adam", loss="binary_crossentropy", metrics=["accuracy"])
@@ -15,7 +16,8 @@ import numpy as np
 
 def get_model():
     model = tf.keras.models.Sequential([
-        tf.keras.layers.Dense(128, activation="relu", input_shape=(784,)),
+        tf.keras.Input(shape=(784,)),
+        tf.keras.layers.Dense(128, activation="relu"),
         tf.keras.layers.Dense(64, activation="relu"),
         tf.keras.layers.Dense(10, activation="softmax"),  # 10 dígitos
     ])
@@ -56,13 +58,23 @@ class FlowerClient(fl.client.NumPyClient):
 #     return FlowerClient(model, x_train, y_train, x_test, y_test).to_client()
 
 
+# CACHE GLOBAL PARA EVITAR ESTOURO DE MEMÓRIA
+_mnist_cache = None
+
+def get_mnist_data():
+    global _mnist_cache
+    if _mnist_cache is None:
+        (x_train_full, y_train_full), (x_test_full, y_test_full) = tf.keras.datasets.mnist.load_data()
+        x_train_full = x_train_full.reshape(-1, 784) / 255.0
+        x_test_full = x_test_full.reshape(-1, 784) / 255.0
+        _mnist_cache = (x_train_full, y_train_full, x_test_full, y_test_full)
+    return _mnist_cache
+
+
 # Usando o dataset MNIST
 def make_client_fn(num_clients: int):
     def client_fn(cid: str) -> fl.client.Client:
-        (x_train_full, y_train_full), (x_test_full, y_test_full) = tf.keras.datasets.mnist.load_data()
-        
-        x_train_full = x_train_full.reshape(-1, 784) / 255.0
-        x_test_full = x_test_full.reshape(-1, 784) / 255.0
+        x_train_full, y_train_full, x_test_full, y_test_full = get_mnist_data()
 
         train_size = len(x_train_full) // num_clients
         test_size = len(x_test_full) // num_clients
