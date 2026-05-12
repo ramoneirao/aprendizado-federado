@@ -13,9 +13,14 @@ def gerar_relatorio(history, config):
         ["Dataset", config["dataset"]],
         ["Total de Clientes", config["num_clients"]],
         ["Rodadas de Comunicação", config["num_rounds"]],
-        ["PoC (d candidatos)", config["d_candidates"]],
-        ["PoC (k selecionados)", config["k_selected"]],
+        ["Clientes por rodada (k)", config["k_selected"]],
+        ["Epochs Locais", config["local_epochs"]],
     ]
+
+    # Adiciona campos do PoC apenas se for a estratégia correta
+    if config["algoritmo"] == "Power of Choice":
+        cenario_data.append(["PoC (d candidatos)", config["d_candidates"]])
+
     print(tabulate(cenario_data, tablefmt="fancy_grid"))
 
     print("\n" + "="*50)
