@@ -7,12 +7,23 @@ def main():
     print("Iniciando bateria de testes do Aprendizado Federado...\n")
 
     # Configurações base compartilhadas para facilitar
+    # base_config = {
+    #     "num_clients": 20,
+    #     "num_rounds": 15, # Reduzido para teste rápido, aumente se precisar
+    #     "local_epochs": 3,
+    #     "model_architecture": "CNN MNIST Simples",
+    #     "dataset": "MNIST",
+    #     "optimizer": "Adam"
+    # }
+
+
+    # teste com CIFAR-10
     base_config = {
         "num_clients": 20,
         "num_rounds": 15, # Reduzido para teste rápido, aumente se precisar
         "local_epochs": 3,
-        "model_architecture": "CNN MNIST Simples",
-        "dataset": "MNIST",
+        "model_architecture": "CNN CIFAR-10",
+        "dataset": "CIFAR-10",
         "optimizer": "Adam"
     }
 
