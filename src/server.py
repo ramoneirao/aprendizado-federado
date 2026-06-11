@@ -35,7 +35,7 @@ def run_experiment(config_experimento):
             evaluate_metrics_aggregation_fn=aggregate_metrics,
         )
 
-    client_fn = make_client_fn(config_experimento["num_clients"])
+    client_fn = make_client_fn(config_experimento["num_clients"], config_experimento.get("dataset", "MNIST"))
     
     history = fl.simulation.start_simulation(
         client_fn=client_fn,

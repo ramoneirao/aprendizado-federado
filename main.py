@@ -7,36 +7,47 @@ def main():
     print("Iniciando bateria de testes do Aprendizado Federado...\n")
 
     # Configurações base compartilhadas para facilitar
+    # base_config = {
+    #     "num_clients": 20,
+    #     "num_rounds": 15, # Reduzido para teste rápido, aumente se precisar
+    #     "local_epochs": 3,
+    #     "model_architecture": "CNN MNIST Simples",
+    #     "dataset": "MNIST",
+    #     "optimizer": "Adam"
+    # }
+
+
     base_config = {
-        "num_clients": 20,
-        "num_rounds": 15, # Reduzido para teste rápido, aumente se precisar
+        "num_clients": 100,
+        "num_rounds": 40,
         "local_epochs": 3,
-        "model_architecture": "CNN MNIST Simples",
-        "dataset": "MNIST",
+        "model_architecture": "CNN CIFAR-10",
+        "dataset": "CIFAR-10",
         "optimizer": "Adam"
     }
+
 
     # Definimos os cenários que queremos comparar
     experimentos = [
         {
             **base_config,
-            "nome_experimento": "FedAvg (Aleatório k=3)",
+            "nome_experimento": "FedAvg (Seleção Aleatória)",
             "algoritmo": "Random Selection",
-            "k_selected": 3,
+            "k_selected": 10,
         },
         {
             **base_config,
-            "nome_experimento": "PoC (d=10, k=3)",
+            "nome_experimento": "PoC Moderado (d=30, k=10)",
             "algoritmo": "Power of Choice",
-            "d_candidates": 10,
-            "k_selected": 3,
+            "d_candidates": 30,
+            "k_selected": 10,
         },
         {
             **base_config,
-            "nome_experimento": "PoC (d=20, k=3)", # Sorteia todos, pega os 3 piores
+            "nome_experimento": "PoC Forte (d=60, k=10)",
             "algoritmo": "Power of Choice",
-            "d_candidates": 20, 
-            "k_selected": 3,
+            "d_candidates": 60,
+            "k_selected": 10,
         }
     ]
 
