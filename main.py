@@ -20,7 +20,7 @@ def main():
     base_config = {
         "num_clients": 100,
         "num_rounds": 40,
-        "local_epochs": 3,
+        "local_epochs": 1,
         "model_architecture": "CNN CIFAR-10",
         "dataset": "CIFAR-10",
         "optimizer": "Adam"
