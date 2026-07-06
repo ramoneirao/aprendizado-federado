@@ -4,6 +4,7 @@ from flwr.server.client_manager import ClientManager
 from flwr.common import FitIns, EvaluateRes, Parameters, Scalar
 from typing import Dict, List, Optional, Tuple, Union
 
+import random
 class PowerOfChoice(fl.server.strategy.FedAvg):
     def __init__(self, d_candidates: int, k_selected: int, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -67,3 +68,119 @@ class PowerOfChoice(fl.server.strategy.FedAvg):
 
         # Chama o método original do FedAvg para continuar o fluxo normal do Flower
         return super().aggregate_evaluate(server_round, results, failures)
+
+class RoundRobin(fl.server.strategy.FedAvg):
+    def __init__(self, k_selected: int, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.k_selected = k_selected
+        self.last_client_index = 0
+
+    def configure_fit(
+        self, server_round: int, parameters: Parameters, client_manager: ClientManager
+    ) -> List[Tuple[ClientProxy, FitIns]]:
+        config = self.on_fit_config_fn(server_round) if self.on_fit_config_fn else {}
+        fit_ins = FitIns(parameters, config)
+        
+        available_clients = client_manager.all()
+        cids = sorted(list(available_clients.keys()))
+        num_available = len(cids)
+        
+        if num_available == 0:
+            return []
+            
+        sample_size = min(self.k_selected, num_available)
+        selected_clients = []
+        for _ in range(sample_size):
+            cid = cids[self.last_client_index % num_available]
+            selected_clients.append(available_clients[cid])
+            self.last_client_index += 1
+            
+        return [(client, fit_ins) for client in selected_clients]
+
+class LeastSelectedFirst(fl.server.strategy.FedAvg):
+    def __init__(self, k_selected: int, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.k_selected = k_selected
+        self.client_selection_counts: Dict[str, int] = {}
+
+    def configure_fit(
+        self, server_round: int, parameters: Parameters, client_manager: ClientManager
+    ) -> List[Tuple[ClientProxy, FitIns]]:
+        config = self.on_fit_config_fn(server_round) if self.on_fit_config_fn else {}
+        fit_ins = FitIns(parameters, config)
+        
+        available_clients = client_manager.all()
+        if not available_clients:
+            return []
+            
+        for cid in available_clients.keys():
+            if cid not in self.client_selection_counts:
+                self.client_selection_counts[cid] = 0
+                
+        sorted_cids = sorted(
+            available_clients.keys(),
+            key=lambda cid: self.client_selection_counts[cid]
+        )
+        
+        sample_size = min(self.k_selected, len(sorted_cids))
+        selected_cids = sorted_cids[:sample_size]
+        
+        for cid in selected_cids:
+            self.client_selection_counts[cid] += 1
+            
+        return [(available_clients[cid], fit_ins) for cid in selected_cids]
+
+class LossProportionalSelection(fl.server.strategy.FedAvg):
+    def __init__(self, k_selected: int, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.k_selected = k_selected
+        self.client_losses: Dict[str, float] = {}
+
+    def configure_fit(
+        self, server_round: int, parameters: Parameters, client_manager: ClientManager
+    ) -> List[Tuple[ClientProxy, FitIns]]:
+        config = self.on_fit_config_fn(server_round) if self.on_fit_config_fn else {}
+        fit_ins = FitIns(parameters, config)
+        
+        available_clients = client_manager.all()
+        cids = list(available_clients.keys())
+        num_available = len(cids)
+        
+        if num_available == 0:
+            return []
+            
+        sample_size = min(self.k_selected, num_available)
+        
+        if not self.client_losses or server_round == 1:
+            sampled_cids = random.sample(cids, sample_size)
+            return [(available_clients[cid], fit_ins) for cid in sampled_cids]
+            
+        default_loss = sum(self.client_losses.values()) / len(self.client_losses) if self.client_losses else 1.0
+        weights = [self.client_losses.get(cid, default_loss) for cid in cids]
+        weights = [w + 1e-9 for w in weights]
+        
+        try:
+            import numpy as np
+            probs = np.array(weights) / sum(weights)
+            sampled_cids = np.random.choice(cids, size=sample_size, replace=False, p=probs)
+        except ImportError:
+            sampled_set = set()
+            sampled_cids = []
+            while len(sampled_set) < sample_size:
+                cid = random.choices(cids, weights=weights, k=1)[0]
+                if cid not in sampled_set:
+                    sampled_set.add(cid)
+                    sampled_cids.append(cid)
+                    
+        return [(available_clients[cid], fit_ins) for cid in sampled_cids]
+
+    def aggregate_evaluate(
+        self,
+        server_round: int,
+        results: List[Tuple[ClientProxy, EvaluateRes]],
+        failures: List[Union[Tuple[ClientProxy, EvaluateRes], BaseException]],
+    ) -> Tuple[Optional[float], Dict[str, Scalar]]:
+        for client, eval_res in results:
+            self.client_losses[client.cid] = eval_res.loss
+        return super().aggregate_evaluate(server_round, results, failures)
+    
