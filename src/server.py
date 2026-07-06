@@ -2,7 +2,7 @@ import flwr as fl
 # pyrefly: ignore [missing-import]
 from src.client import make_client_fn
 # pyrefly: ignore [missing-import]
-from src.strategy import PowerOfChoice
+from src.strategy import PowerOfChoice, RoundRobin, LeastSelectedFirst, LossProportionalSelection
 # pyrefly: ignore [missing-import]
 from src.evaluates import gerar_relatorio # Importaremos nossa função de relatório
 
@@ -22,6 +22,27 @@ def run_experiment(config_experimento):
     if config_experimento["algoritmo"] == "Power of Choice":
         strategy = PowerOfChoice(
             d_candidates=config_experimento["d_candidates"],
+            k_selected=config_experimento["k_selected"],
+            fraction_evaluate=1.0,
+            min_available_clients=config_experimento["num_clients"],
+            evaluate_metrics_aggregation_fn=aggregate_metrics,
+        )
+    elif config_experimento["algoritmo"] == "Round Robin":
+        strategy = RoundRobin(
+            k_selected=config_experimento["k_selected"],
+            fraction_evaluate=1.0,
+            min_available_clients=config_experimento["num_clients"],
+            evaluate_metrics_aggregation_fn=aggregate_metrics,
+        )
+    elif config_experimento["algoritmo"] == "Least Selected First":
+        strategy = LeastSelectedFirst(
+            k_selected=config_experimento["k_selected"],
+            fraction_evaluate=1.0,
+            min_available_clients=config_experimento["num_clients"],
+            evaluate_metrics_aggregation_fn=aggregate_metrics,
+        )
+    elif config_experimento["algoritmo"] == "Loss Proportional":
+        strategy = LossProportionalSelection(
             k_selected=config_experimento["k_selected"],
             fraction_evaluate=1.0,
             min_available_clients=config_experimento["num_clients"],
