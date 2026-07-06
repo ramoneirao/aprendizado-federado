@@ -48,6 +48,24 @@ def main():
             "algoritmo": "Power of Choice",
             "d_candidates": 60,
             "k_selected": 10,
+        },
+        {
+            **base_config,
+            "nome_experimento": "Round Robin (Sequencial)",
+            "algoritmo": "Round Robin",
+            "k_selected": 10,
+        },
+        {
+            **base_config,
+            "nome_experimento": "Menos Selecionados Primeiro",
+            "algoritmo": "Least Selected First",
+            "k_selected": 10,
+        },
+        {
+            **base_config,
+            "nome_experimento": "Proporcional à Perda (Loss Proportional)",
+            "algoritmo": "Loss Proportional",
+            "k_selected": 10,
         }
     ]
 
